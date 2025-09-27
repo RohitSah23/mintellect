@@ -310,3 +310,144 @@ export const getIpById = async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };
+// Mint IP: fetch metadata, upload to IPFS, mint onchain, update DB
+export const mintIP = async (req: Request, res: Response): Promise<void> => {
+    const db = req.app.locals.db;
+    const { ip_id } = req.body;
+    const user = (req as any).user;
+
+    if (!ip_id) {
+        res.status(400).json({ error: 'ip_id is required' });
+        return;
+    }
+
+    try {
+        // 1. Fetch IP metadata from DB
+        const walletInfo = await db.collection('wallets').findOne({ uid: user?.uid });
+        const ipMeta = await db.collection('ip_metadata').findOne({ ip_id });
+        if (!ipMeta) {
+            res.status(404).json({ error: 'IP metadata not found' });
+            return;
+        }
+        // Optional: check ownership
+        if (ipMeta.uid !== user?.uid) {
+            res.status(403).json({ error: 'Unauthorized' });
+            return;
+        }
+
+        if (ipMeta.status === 'MINTED') {
+            res.status(400).json({ error: 'IP has already been minted' });
+            return;
+        }
+
+        // 2. Upload metadata to IPFS (as JSON)
+        let ipfsUri = '';
+        try {
+            const buffer = Buffer.from(JSON.stringify(ipMeta));
+            const jsonFile = {
+                fieldname: 'file',
+                originalname: `${ip_id}.json`,
+                encoding: '7bit',
+                mimetype: 'application/json',
+                size: buffer.length,
+                buffer,
+                stream: Readable.from(buffer),
+                destination: '',
+                filename: '',
+                path: '',
+            };
+            const uploadResult = await uploadToFilebase(jsonFile);
+            ipfsUri = uploadResult.ipfsUrl;
+        } catch (err) {
+            console.error('IPFS upload failed:', err);
+            res.status(500).json({ error: 'Failed to upload metadata to IPFS' });
+            return;
+        }
+
+        // 3. Mint on smart contract using ethers.js
+        // --- CONFIG ---
+        const provider = new ethers.JsonRpcProvider(process.env.RPC_URL);
+        const privateKey = process.env.PRIVATE_KEY;
+        if (!privateKey) {
+            res.status(500).json({ error: 'Server misconfiguration: PRIVATE_KEY is not set' });
+            return;
+        }
+        const wallet = new ethers.Wallet(privateKey, provider);
+        const contractAddress = process.env.CONTRACT_ADDRESS!;
+        const contractABI = [
+            "function safeMint(address to, string uri) public returns (uint256)",
+            "event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)"
+        ];
+        const contract = new ethers.Contract(contractAddress, contractABI, wallet);
+
+        let tx, txReceipt, tokenId;
+        try {
+            tx = await contract.safeMint(walletInfo?.walletInfo.address, ipfsUri);
+            txReceipt = await tx.wait();
+            // Try to get tokenId from event logs (if contract emits Transfer event)
+            const transferEvent = txReceipt?.logs?.find((l: any) => l.topics && l.topics[0] === ethers.id("Transfer(address,address,uint256)"));
+            if (transferEvent && transferEvent.topics?.[3]) {
+                tokenId = ethers.getBigInt(transferEvent.topics[3]).toString();
+            } else if (txReceipt && txReceipt.logs && txReceipt.logs.length > 0) {
+                // fallback: try to get tokenId from return value if available
+                if (txReceipt.logs[0].topics?.length === 4) {
+                    tokenId = ethers.getBigInt(txReceipt.logs[0].topics[3]).toString();
+                }
+            }
+        } catch (err) {
+            console.error('Smart contract mint failed:', err);
+            res.status(500).json({ error: 'Smart contract mint failed' });
+            return;
+        }
+
+        // 4. Update ip_metadata status
+        await db.collection('ip_metadata').updateOne(
+            { ip_id },
+            { $set: { status: 'MINTED', updatedAt: Date.now() } }
+        );
+
+        // 5. Store in tokenized_ip collection
+        await db.collection('tokenized_ip').insertOne({
+            ip_id,
+            tokenId: tokenId ?? null,
+            tokenUri: ipfsUri,
+            txHash: tx?.hash,
+            txReceipt,
+            mintedBy: user?.uid,
+            mintedAt: Date.now()
+        });
+
+        res.status(200).json({
+            message: 'IP minted and tokenized successfully',
+            ip_id,
+            tokenId,
+            tokenUri: ipfsUri,
+            txHash: tx?.hash
+        });
+    } catch (err) {
+        console.error('Mint IP error:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+// Get transaction info for a tokenized IP by ip_id
+export const getTxInfo = async (req: Request, res: Response): Promise<void> => {
+    const db = req.app.locals.db;
+    const ip_id = req.params.id;
+    if (!ip_id) {
+        res.status(400).json({ error: 'ip_id is required' });
+        return;
+    }
+    try {
+        const txInfo = await db.collection('tokenized_ip').findOne({ ip_id });
+        console.log('Fetched txInfo:', txInfo);
+        if (!txInfo) {
+            res.status(404).json({ error: 'Transaction info not found' });
+            return;
+        }
+        res.status(200).json({ message: 'Transaction info fetched successfully', data: txInfo });
+    } catch (err) {
+        console.error('getTxInfo error:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
