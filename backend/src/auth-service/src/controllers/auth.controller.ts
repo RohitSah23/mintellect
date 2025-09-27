@@ -107,9 +107,13 @@ export const signup = async (req: Request, res: Response): Promise<void> => {
     const uid = `user_${uuidv7()}`;
     const date = Date.now();
 
-    // OTP verification check
-    const contact = data.phone || data.email;
-    const dbOtp = await db.collection('otps').findOne({ contact });
+const dbOtp = await db.collection('otps').findOne({
+  $or: [
+    { contact: data.email },
+    { contact: data.phone }
+  ]
+});
+
     if (!dbOtp || !dbOtp.verified) {
         res.status(401).json({ error: 'OTP not verified.' });
         return;

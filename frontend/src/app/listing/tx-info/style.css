@@ -1,0 +1,103 @@
+/* Mintellect Themed Transaction Details Page Styles */
+.tx-info-container {
+    max-width: 600px;
+    margin: 48px auto 0 auto;
+    padding: 0 0 32px 0;
+    background: none;
+    font-family: inherit;
+}
+
+.tx-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 36px 28px 28px 28px;
+    box-shadow: 0 4px 32px 0 rgba(30, 34, 90, 0.10);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    border: 1.5px solid #f1f1f6;
+}
+
+.tx-card h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #1a1a2e;
+    letter-spacing: -0.5px;
+}
+
+.tx-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.04rem;
+    padding: 7px 0;
+    border-bottom: 1px solid #f3f3f7;
+    word-break: break-word;
+}
+
+.tx-row:last-child {
+    border-bottom: none;
+}
+
+.tx-label {
+    min-width: 130px;
+    color: #6a6a8e;
+    font-weight: 600;
+    font-size: 1.01rem;
+    letter-spacing: 0.01em;
+}
+
+.tx-row a {
+    color: #2d6cdf;
+    text-decoration: underline;
+    word-break: break-all;
+    font-weight: 500;
+}
+
+.success {
+    color: #1bbf5c;
+    font-weight: 700;
+}
+
+.fail {
+    color: #e74c3c;
+    font-weight: 700;
+}
+
+.error {
+    color: #e74c3c;
+    background: #fff0f0;
+    border-radius: 10px;
+    padding: 14px;
+    margin: 18px 0;
+    text-align: center;
+    font-size: 1.08rem;
+}
+
+@media (max-width: 700px) {
+    .tx-info-container {
+        max-width: 98vw;
+        padding: 0 0 18px 0;
+    }
+
+    .tx-card {
+        padding: 18px 6px 12px 6px;
+        border-radius: 12px;
+    }
+
+    .tx-label {
+        min-width: 90px;
+        font-size: 0.98rem;
+    }
+
+    .tx-row {
+        font-size: 0.98rem;
+        gap: 7px;
+    }
+
+    .tx-card h2 {
+        font-size: 1.13rem;
+        margin-bottom: 10px;
+    }
+}
