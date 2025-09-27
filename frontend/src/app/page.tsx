@@ -1,10 +1,23 @@
 import Image from "next/image";
 
-export default function Home() {
+export default function Login() {
   return (
-    <div>
-      <h1 className="text-3xl font-bold underline">Welcome to My App</h1>
-      
+   <div className="login-body">
+      <div className="grid-overlay"></div>
+      {/* ...existing code... */}
+      <div className="login-container">
+        <div className="login-card">
+          <div className="login-header">
+            <div className="logo-container">
+              <div className="logo">
+                <span className="logo-text">Mintellect</span>
+              </div>
+            </div>
+            <h1 className="login-title">Welcome Back</h1>
+          </div>
+        
+        </div>
+      </div>
     </div>
   );
 }
