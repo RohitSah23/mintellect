@@ -1,8 +1,113 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import { Oval } from "react-loader-spinner";
+import "./style.css";
+import { Mail, MoveRight } from "lucide-react";
+import axios from "axios";
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter } from "next/navigation";
 
 export default function Login() {
+  const router = useRouter();
+  const { authStatus } = useAuth();
+  const [contact, setContact] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpStatus, setOtpStatus] = useState("");
+  const [loginStatus, setLoginStatus] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Send OTP
+  // Helper to check if input is email or phone
+  const isEmail = (val: string) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(val);
+  const isPhone = (val: string) => /^\d{10}$/.test(val.replace(/\D/g, ""));
+
+  const handleSendOtp = async () => {
+    setOtpStatus("");
+    setIsLoading(true);
+    try {
+      if (!contact) {
+        setOtpStatus("Please enter your email or phone number.");
+        setIsLoading(false);
+        return;
+      }
+      let payload: any = { isLogin: true };
+      if (isEmail(contact)) payload.email = contact;
+      else if (isPhone(contact)) payload.phone = contact.replace(/\D/g, "");
+      else {
+        setOtpStatus("Enter a valid email or 10-digit phone number.");
+        setIsLoading(false);
+        return;
+      }
+      await axios.post(`${process.env.NEXT_PUBLIC_BACKEND_API_URI}/v1/auth/send-otp`, payload);
+      setOtpSent(true);
+      setOtpStatus("OTP sent successfully.");
+    } catch (err: any) {
+      setOtpStatus(err?.response?.data?.error || "Failed to send OTP.");
+      if (err?.response?.status === 404) {
+        location.href = '/signup';
+      }
+    }
+    setIsLoading(false);
+  };
+
+  // Verify OTP and login
+  const handleLogin = async () => {
+    setLoginStatus("");
+    setIsLoading(true);
+
+    try {
+      if (!otp || otp.length !== 6) {
+        setLoginStatus("Enter valid OTP.");
+        return;
+      }
+
+      let payload: any = { otp };
+      if (isEmail(contact)) payload.email = contact;
+      else if (isPhone(contact)) payload.phone = contact.replace(/\D/g, "");
+      else {
+        setLoginStatus("Enter a valid email or 10-digit phone number.");
+        return;
+      }
+
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_BACKEND_API_URI}/v1/auth/login`,
+        payload,
+        { withCredentials: true }
+      );
+
+      if (res.status === 200) {
+        setLoginStatus("Login successful.");
+        location.href = '/dashboard';
+      } else {
+        setLoginStatus(res.data?.error || "Login failed.");
+      }
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        if (err.response) {
+          setLoginStatus(err.response.data?.error || `Error: ${err.response.status}`);
+        } else if (err.request) {
+          setLoginStatus("No response from server. Check your connection.");
+        } else {
+          setLoginStatus("Request setup error.");
+        }
+      } else {
+        setLoginStatus("Unexpected error occurred.");
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (authStatus === 'success') {
+      location.href = '/dashboard';
+    }
+  }, [authStatus]);
+
   return (
-   <div className="login-body">
+    <div className="login-body">
       <div className="grid-overlay"></div>
       {/* ...existing code... */}
       <div className="login-container">
