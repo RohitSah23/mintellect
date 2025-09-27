@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { headers } from 'next/headers'
-import WagmiContextProvider from "@/context/wgami-context";
+import WagmiContextProvider from "@/context/wagmi-context";
 import { AuthProvider } from "@/context/authContext";
 import { AlertProvider } from "@/context/alertContext";
 import NavBar from "@/components/navbar";
