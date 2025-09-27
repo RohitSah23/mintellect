@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Oval } from "react-loader-spinner";
-// import "./style.css";
+import "./style.css";
 import { Mail, MoveRight } from "lucide-react";
 import axios from "axios";
 import { useAuth } from "@/hooks/useAuth";
