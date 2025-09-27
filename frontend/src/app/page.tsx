@@ -63,7 +63,15 @@ export default function Login() {
               </>
             )}
           </div>
-         
+          <div className="migrate-section">
+            <p className="migrate-text">Don't have an account?</p>
+            <button className="migrate-button" onClick={() => { router.push('/signup') }}>
+              Sign Up <MoveRight size={20} />
+            </button>
+          </div>
+          <div className="footer-text">
+            By continuing, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>
+          </div>
         </div>
       </div>
     </div>
