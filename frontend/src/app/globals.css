@@ -1,24 +1,33 @@
 @import "tailwindcss";
 
-@keyframes fadeInOut {
-  0% {
-    opacity: 0;
-    transform: translateX(100px);
-  }
-  10% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  90% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  100% {
-    opacity: 0;
-    transform: translateX(100px);
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
   }
 }
 
-.animate-fadeInOut {
-  animation: fadeInOut 2s ease-in-out forwards;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  color: #333;
+  overflow-x: hidden;
 }

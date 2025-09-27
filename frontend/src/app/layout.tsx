@@ -14,8 +14,8 @@ const poppins = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Mintellect - Convert your IP into tokenized assets",
-  description: "Convert your IP into tokenized assets",
+  title: "Mintellect - Convert your IP into tokenized assests",
+  description: "Convert your IP into tokenized assests",
 };
 
 export default async function RootLayout({
